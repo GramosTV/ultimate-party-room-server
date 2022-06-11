@@ -9,7 +9,6 @@ export class MessagesService {
   clientToUser = {};
   identify(name: string, clientId: string) {
     this.clientToUser[clientId] = name;
-
     return Object.values(this.clientToUser);
   }
 
@@ -17,8 +16,11 @@ export class MessagesService {
     return this.clientToUser[clientId];
   }
 
-  create(createMessageDto: CreateMessageDto) {
-    const message = { ...createMessageDto };
+  create(createMessageDto: CreateMessageDto, clientId: string) {
+    const message: MessageEntity = {
+      name: this.clientToUser[clientId],
+      text: createMessageDto.text,
+    };
     this.messages.push(createMessageDto);
     return message;
   }

@@ -13,10 +13,9 @@ export class RoomService {
     return this.roomRepository.find();
   }
   async createRoom(
-    roomId: string = uuid(),
     createdAt: string = new Date().toISOString().split('T')[0],
   ): Promise<Room> {
-    const newRoom = this.roomRepository.create({ roomId, createdAt });
+    const newRoom = this.roomRepository.create({ createdAt });
     return this.roomRepository.save(newRoom);
   }
 }

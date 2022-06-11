@@ -3,11 +3,12 @@ import {
   SubscribeMessage,
   MessageBody,
   WebSocketServer,
+  ConnectedSocket,
 } from '@nestjs/websockets';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
@@ -34,13 +35,21 @@ export class MessagesGateway {
   }
 
   @SubscribeMessage('join')
-  joinRoom() {
-    return null; //TODO
+  joinRoom(
+    @MessageBody('name') name: string,
+    @ConnectedSocket() client: Socket,
+  ) {
+    return this.messagesService.identify(name, client.id);
   }
 
   @SubscribeMessage('typing')
-  async typing() {
-    return null; //TODO
+  async typing(
+    @MessageBody('isTyping') isTyping: boolean,
+    @ConnectedSocket() client: Socket,
+  ) {
+    const name = await this.messagesService.getClientName(client.id);
+
+    client.broadcast.emit('typing', { name, isTyping });
   }
   // @SubscribeMessage('findOneMessage')
   // findOne(@MessageBody() id: number) {

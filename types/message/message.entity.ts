@@ -1,4 +1,4 @@
-export class Message {
+export class MessageEntity {
   name: string;
   text: string;
 }

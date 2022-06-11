@@ -5,7 +5,7 @@ import { UpdateMessageDto } from './dto/update-message.dto';
 
 @Injectable()
 export class MessagesService {
-  messages: MessageEntity[] = [{ name: 'XYZ', text: 'sup' }];
+  messages: MessageEntity[] = [];
   clientToUser = {};
   identify(name: string, clientId: string) {
     this.clientToUser[clientId] = name;

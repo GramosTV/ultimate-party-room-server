@@ -2,10 +2,11 @@ import { Injectable, Inject } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Room } from '../entities/Room.entity';
 import { v4 as uuid } from 'uuid';
+import { InjectRepository } from '@nestjs/typeorm';
 @Injectable()
 export class RoomService {
   constructor(
-    @Inject('ROOM_REPOSITORY')
+    @InjectRepository(Room)
     private roomRepository: Repository<Room>,
   ) {}
 

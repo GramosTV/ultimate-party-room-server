@@ -25,18 +25,16 @@ export class MessagesGateway {
     @MessageBody() createMessageDto: CreateMessageDto,
     @ConnectedSocket() client: Socket,
   ) {
-    const message = await this.messagesService.create(
-      createMessageDto,
-      client.id,
-    );
+    const message = await this.messagesService.create(createMessageDto);
 
     this.server.emit('message', message);
     return message;
   }
 
   @SubscribeMessage('findAllMessages')
-  findAll() {
-    return this.messagesService.findAll();
+  async findAllWithId(@MessageBody('roomId') roomId: string) {
+    const messages = await this.messagesService.findAllWithId(roomId);
+    return messages;
   }
 
   @SubscribeMessage('join')

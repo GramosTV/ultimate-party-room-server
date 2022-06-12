@@ -1,10 +1,9 @@
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
-import { DatabaseModule } from '../../database.module';
-import { messageProviders } from '../providers/message.providers';
-import { MessageService } from '../services/message.service';
+import { Message } from '../entities/Message.entity';
 
 @Module({
-  imports: [DatabaseModule],
-  providers: [...messageProviders, MessageService],
+  imports: [TypeOrmModule.forFeature([Message])],
+  exports: [TypeOrmModule],
 })
 export class MessageModule {}

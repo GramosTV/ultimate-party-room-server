@@ -33,7 +33,7 @@ export class RoomsGateway {
   }
 
   @SubscribeMessage('videoState')
-  async pauseVideo(
+  async changeVideoState(
     @MessageBody('roomId') roomId: string,
     @MessageBody('videoState') videoState: VideoState,
     @ConnectedSocket() client: Socket,
@@ -43,6 +43,22 @@ export class RoomsGateway {
     ).filter((item) => item !== client.id);
     clientIds.map(async (e) => {
       client.to(e).emit('videoState', videoState);
+    });
+  }
+
+  @SubscribeMessage('videoMoment')
+  async changeVideoMoment(
+    @MessageBody('roomId') roomId: string,
+    @MessageBody('videoMoment') videoMoment: number,
+    @ConnectedSocket() client: Socket,
+  ) {
+    const clientIds = (
+      await this.messagesService.getClientIdsByRoomId(roomId)
+    ).filter((item) => item !== client.id);
+    clientIds.map(async (e) => {
+      client.to(e).emit('videoMoment', {
+        videoMoment,
+      });
     });
   }
 

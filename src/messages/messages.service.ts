@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { MessageService } from 'src/db/services/message.service';
-import { UserService } from 'src/db/services/user.service';
+import { Message } from 'src/db/message/message.entity';
+import { MessageService } from 'src/db/message/message.service';
+import { RoomService } from 'src/db/room/room.service';
+import { UserService } from 'src/db/user/user.service';
 import { MessageEntity } from 'types';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
@@ -10,10 +12,11 @@ export class MessagesService {
   constructor(
     private readonly messageService: MessageService,
     private readonly userService: UserService,
+    private readonly roomService: RoomService,
   ) {}
 
   async identify(name: string, clientId: string) {
-    const user = this.userService.findUserWithClientId(clientId);
+    const user = await this.userService.findUserWithClientId(clientId);
     if (user) {
       return user;
     } else {
@@ -25,7 +28,10 @@ export class MessagesService {
     const userName = await this.userService.getUserName(clientId);
     return userName;
   }
-
+  async getClientIdsByRoomId(roomId: string) {
+    const clientIds = await this.roomService.getClientIds(roomId);
+    return clientIds;
+  }
   async create(createMessageDto: CreateMessageDto) {
     const message: MessageEntity = {
       name: createMessageDto.name,
@@ -40,7 +46,7 @@ export class MessagesService {
     return message;
   }
 
-  async findAllWithId(roomId: string): Promise<MessageEntity[]> {
+  async findAllWithId(roomId: string): Promise<Message[]> {
     const messages = await this.messageService.findAllWithId(roomId);
     return messages;
   }

@@ -3,14 +3,14 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MessagesModule } from './messages/messages.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RoomModule } from './db/modules/room.module';
-import { MessageModule } from './db/modules/message.module';
-import { UserModule } from './db/modules/user.module';
+import { RoomModule } from './db/room/room.module';
+import { MessageModule } from './db/message/message.module';
+import { UserModule } from './db/user/user.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { DataSource } from 'typeorm';
-import { User } from './db/entities/user.entity';
-import { Message } from './db/entities/message.entity';
-import { Room } from './db/entities/room.entity';
+import { User } from './db/user/user.entity';
+import { Message } from './db/message/message.entity';
+import { Room } from './db/room/room.entity';
 @Module({
   imports: [
     MessagesModule,

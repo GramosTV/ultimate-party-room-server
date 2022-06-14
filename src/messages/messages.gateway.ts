@@ -26,7 +26,6 @@ export class MessagesGateway {
     @ConnectedSocket() client: Socket,
   ) {
     const message = await this.messagesService.create(createMessageDto);
-
     this.server.emit('message', message);
     return message;
   }
@@ -48,11 +47,16 @@ export class MessagesGateway {
   @SubscribeMessage('typing')
   async typing(
     @MessageBody('isTyping') isTyping: boolean,
+    @MessageBody('roomId') roomId: string,
     @ConnectedSocket() client: Socket,
   ) {
+    let clientIds = await this.messagesService.getClientIdsByRoomId(roomId);
     const name = await this.messagesService.getClientName(client.id);
-
-    client.broadcast.emit('typing', { name, isTyping });
+    clientIds = clientIds.filter((item) => item !== client.id);
+    clientIds.map((e) => {
+      client.to(e).emit('typing', { name, isTyping });
+    });
+    // client.broadcast.emit('typing', { name, isTyping });
   }
   // @SubscribeMessage('findOneMessage')
   // findOne(@MessageBody() id: number) {

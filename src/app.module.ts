@@ -11,6 +11,7 @@ import { DataSource } from 'typeorm';
 import { User } from './db/user/user.entity';
 import { Message } from './db/message/message.entity';
 import { Room } from './db/room/room.entity';
+import { PhotosModule } from './photos/photos.module';
 @Module({
   imports: [
     MessagesModule,
@@ -28,6 +29,7 @@ import { Room } from './db/room/room.entity';
       synchronize: true,
       autoLoadEntities: true,
     }),
+    PhotosModule,
   ],
   controllers: [AppController],
   providers: [AppService],

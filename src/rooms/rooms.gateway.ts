@@ -32,6 +32,7 @@ export class RoomsGateway {
     return room;
   }
 
+  // VIDEO GATEWAY
   @SubscribeMessage('videoState')
   async changeVideoState(
     @MessageBody('roomId') roomId: string,
@@ -61,7 +62,44 @@ export class RoomsGateway {
       });
     });
   }
+  //
 
+  // CANVAS GATEWAY
+  @SubscribeMessage('getCanvas')
+  async getCanvas(@MessageBody('roomId') roomId: string) {
+    const canvas = await this.roomService.getCanvas(roomId);
+    return canvas;
+  }
+
+  @SubscribeMessage('canvasChange')
+  async changeCanvas(
+    @MessageBody('roomId') roomId: string,
+    @MessageBody('canvasAction') canvasAction: string,
+    @ConnectedSocket() client: Socket,
+  ) {
+    await this.roomService.updateCanvas(roomId, canvasAction);
+    const clientIds = (
+      await this.messagesService.getClientIdsByRoomId(roomId)
+    ).filter((item) => item !== client.id);
+    clientIds.map(async (e) => {
+      client.to(e).emit('canvasChange', canvasAction);
+    });
+  }
+
+  @SubscribeMessage('canvasClean')
+  async eraseCanvas(
+    @MessageBody('roomId') roomId: string,
+    @ConnectedSocket() client: Socket,
+  ) {
+    await this.roomService.clearCanvas(roomId);
+    const clientIds = (
+      await this.messagesService.getClientIdsByRoomId(roomId)
+    ).filter((item) => item !== client.id);
+    clientIds.map(async (e) => {
+      client.to(e).emit('canvasClean');
+    });
+  }
+  //
   @SubscribeMessage('joinRoom')
   async joinRoom(
     @MessageBody('roomId') roomId: string,

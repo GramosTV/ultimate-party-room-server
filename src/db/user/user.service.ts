@@ -39,8 +39,16 @@ export class UserService {
     }
     return null;
   }
-  async createUser(name: string, clientId: string): Promise<User> {
-    const newUser = this.userRepository.create({ name, clientId });
+  async createUser(
+    name: string,
+    clientId: string,
+    profilePicture = '',
+  ): Promise<User> {
+    const newUser = this.userRepository.create({
+      name,
+      clientId,
+      profilePicture,
+    });
     return this.userRepository.save(newUser);
   }
 }

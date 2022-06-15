@@ -15,12 +15,18 @@ export class MessagesService {
     private readonly roomService: RoomService,
   ) {}
 
-  async identify(name: string, clientId: string) {
+  async identify(name: string, clientId: string, profilePicture = '') {
     const user = await this.userService.findUserWithClientId(clientId);
     if (user) {
       return user;
     } else {
-      return this.userService.createUser(name, clientId);
+      // @UseInterceptors(
+      //   FileInterceptor('photo', {
+      //     dest: '../uploads/profilePictures',
+      //     limits: { fileSize: byte * 10 },
+      //   }),
+      // )
+      return this.userService.createUser(name, clientId, profilePicture);
     }
   }
 

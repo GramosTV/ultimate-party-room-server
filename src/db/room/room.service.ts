@@ -40,10 +40,7 @@ export class RoomService {
       .leftJoinAndSelect('room.users', 'users')
       .where('room.id = :id', { id: roomId })
       .getOne();
-    const users = roomWithUsers.users.map((e) => {
-      return e;
-    });
-    return users;
+    return roomWithUsers.users;
   }
   async joinRoom(
     roomId: string,
@@ -57,12 +54,9 @@ export class RoomService {
       .leftJoinAndSelect('room.users', 'users')
       .where('room.id = :id', { id: roomId })
       .getOne();
-    const users = roomWithUsers.users.map((e) => {
-      return e;
-    });
     await this.roomRepository.save({
       id: roomId,
-      users: [...users, user],
+      users: [...roomWithUsers.users, user],
       createdAt: new Date().toJSON().slice(0, 19).replace('T', ' '),
     });
     if (quit) {
@@ -74,7 +68,16 @@ export class RoomService {
     const room = await this.roomRepository.findOne({ where: { id } });
     return room;
   }
-
+  async getCanvas(roomId: string): Promise<string> {
+    const canvas = (
+      await this.roomRepository
+        .createQueryBuilder('room')
+        .select('room.canvas')
+        .where('room.id = :id', { id: roomId })
+        .getOne()
+    ).canvas;
+    return canvas;
+  }
   async createRoom(
     createRoomDto: CreateRoomDto,
     createdAt: string = new Date().toJSON().slice(0, 19).replace('T', ' '),
@@ -82,7 +85,40 @@ export class RoomService {
     const user = await this.userService.findUserWithClientId(
       createRoomDto.clientId,
     );
-    const newRoom = this.roomRepository.create({ users: [user], createdAt });
+    const newRoom = this.roomRepository.create({
+      users: [user],
+      createdAt,
+      canvas: '',
+    });
     return this.roomRepository.save(newRoom);
+  }
+
+  async updateCanvas(
+    roomId: string,
+    canvasAction: string,
+  ): Promise<UpdateResult> {
+    let result: string;
+    try {
+      const canvas = await this.getCanvas(roomId);
+      if (canvas) {
+        const parsed = await JSON.parse(canvas);
+        result = JSON.stringify([...parsed, canvasAction]);
+      } else {
+        result = JSON.stringify([canvasAction]);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    const updateResult = await this.roomRepository.update(roomId, {
+      canvas: result,
+    });
+    return updateResult;
+  }
+
+  async clearCanvas(roomId: string): Promise<UpdateResult> {
+    const updateResult = await this.roomRepository.update(roomId, {
+      canvas: '',
+    });
+    return updateResult;
   }
 }

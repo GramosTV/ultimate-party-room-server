@@ -10,16 +10,22 @@ export class Room {
   @Column()
   createdAt: Date;
 
+  @Column({ length: 100 })
+  videoUrl: string;
+
+  @Column()
+  videoMoment: number;
+
   @Column({ length: 65535 })
   canvas: string;
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // eslint-disable-next-line prettier/prettier
-  @OneToMany((type) => Message, (message) => message.room)
+  @OneToMany(type => Message, (message) => message.room)
   messages: Message[];
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // eslint-disable-next-line prettier/prettier
-  @OneToMany((type) => User, (user) => user.room)
+  @OneToMany(type => User, (user) => user.room)
   users: User[];
 }

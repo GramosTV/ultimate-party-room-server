@@ -13,7 +13,7 @@ export class Room {
   @Column({ length: 100 })
   videoUrl: string;
 
-  @Column()
+  @Column({ type: 'decimal', precision: 20, scale: 19, default: 0 })
   videoMoment: number;
 
   @Column({ length: 65535 })

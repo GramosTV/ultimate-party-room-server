@@ -78,16 +78,15 @@ export class RoomService {
     ).canvas;
     return canvas;
   }
-  async createRoom(
-    createRoomDto: CreateRoomDto,
-    createdAt: string = new Date().toJSON().slice(0, 19).replace('T', ' '),
-  ): Promise<Room> {
+  async createRoom(createRoomDto: CreateRoomDto): Promise<Room> {
     const user = await this.userService.findUserWithClientId(
       createRoomDto.clientId,
     );
     const newRoom = this.roomRepository.create({
       users: [user],
-      createdAt,
+      createdAt: new Date().toJSON().slice(0, 19).replace('T', ' '),
+      videoUrl: '',
+      videoMoment: 0,
       canvas: '',
     });
     return this.roomRepository.save(newRoom);
@@ -111,6 +110,26 @@ export class RoomService {
     }
     const updateResult = await this.roomRepository.update(roomId, {
       canvas: result,
+    });
+    return updateResult;
+  }
+
+  async updateVideoUrl(
+    roomId: string,
+    videoUrl: string,
+  ): Promise<UpdateResult> {
+    const updateResult = await this.roomRepository.update(roomId, {
+      videoUrl,
+    });
+    return updateResult;
+  }
+
+  async updateVideoMoment(
+    roomId: string,
+    videoUrl: string,
+  ): Promise<UpdateResult> {
+    const updateResult = await this.roomRepository.update(roomId, {
+      videoUrl,
     });
     return updateResult;
   }

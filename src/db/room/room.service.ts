@@ -78,6 +78,29 @@ export class RoomService {
     ).canvas;
     return canvas;
   }
+
+  async getVideoUrl(roomId: string): Promise<string> {
+    const videoUrl = (
+      await this.roomRepository
+        .createQueryBuilder('room')
+        .select('room.videoUrl')
+        .where('room.id = :id', { id: roomId })
+        .getOne()
+    ).videoUrl;
+    return videoUrl;
+  }
+
+  async getVideoMoment(roomId: string): Promise<number> {
+    const videoMoment = (
+      await this.roomRepository
+        .createQueryBuilder('room')
+        .select('room.videoMoment')
+        .where('room.id = :id', { id: roomId })
+        .getOne()
+    ).videoMoment;
+    return videoMoment;
+  }
+
   async createRoom(createRoomDto: CreateRoomDto): Promise<Room> {
     const user = await this.userService.findUserWithClientId(
       createRoomDto.clientId,

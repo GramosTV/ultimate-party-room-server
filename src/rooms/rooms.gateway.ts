@@ -62,6 +62,55 @@ export class RoomsGateway {
       });
     });
   }
+
+  // The difference between this method and the one above is that this one updates the video moment for new users that'll join the room and not for the users that are already in the room.
+  @SubscribeMessage('updateVideoMoment')
+  async updateVideoMoment(
+    @MessageBody('roomId') roomId: string,
+    @MessageBody('videoMoment') videoMoment: number,
+    @ConnectedSocket() client: Socket,
+  ) {
+    const updateResult = await this.roomService.updateVideoMoment(
+      roomId,
+      videoMoment,
+    );
+    return updateResult;
+  }
+
+  @SubscribeMessage('getVideoMoment')
+  async getVideoMoment(
+    @MessageBody('roomId') roomId: string,
+    @ConnectedSocket() client: Socket,
+  ) {
+    const videoMoment = await this.roomService.getVideoMoment(roomId);
+    return videoMoment;
+  }
+
+  @SubscribeMessage('updateVideoUrl')
+  async updateVideoUrl(
+    @MessageBody('roomId') roomId: string,
+    @MessageBody('videoUrl') videoUrl: string,
+    @ConnectedSocket() client: Socket,
+  ) {
+    const result = await this.roomService.updateVideoUrl(roomId, videoUrl);
+    const clientIds = (
+      await this.messagesService.getClientIdsByRoomId(roomId)
+    ).filter((item) => item !== client.id);
+    clientIds.map(async (e) => {
+      client.to(e).emit('videoUrl', {
+        videoUrl,
+      });
+    });
+  }
+
+  @SubscribeMessage('getVideoUrl')
+  async getVideoUrl(
+    @MessageBody('roomId') roomId: string,
+    @ConnectedSocket() client: Socket,
+  ) {
+    const videoUrl = await this.roomService.getVideoUrl(roomId);
+    return videoUrl;
+  }
   //
 
   // CANVAS GATEWAY

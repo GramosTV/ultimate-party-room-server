@@ -126,10 +126,10 @@ export class RoomService {
 
   async updateVideoMoment(
     roomId: string,
-    videoUrl: string,
+    videoMoment: number,
   ): Promise<UpdateResult> {
     const updateResult = await this.roomRepository.update(roomId, {
-      videoUrl,
+      videoMoment,
     });
     return updateResult;
   }

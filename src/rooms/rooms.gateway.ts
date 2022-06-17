@@ -57,9 +57,7 @@ export class RoomsGateway {
       await this.messagesService.getClientIdsByRoomId(roomId)
     ).filter((item) => item !== client.id);
     clientIds.map(async (e) => {
-      client.to(e).emit('videoMoment', {
-        videoMoment,
-      });
+      client.to(e).emit('videoMoment', videoMoment);
     });
   }
 
@@ -68,7 +66,6 @@ export class RoomsGateway {
   async updateVideoMoment(
     @MessageBody('roomId') roomId: string,
     @MessageBody('videoMoment') videoMoment: number,
-    @ConnectedSocket() client: Socket,
   ) {
     const updateResult = await this.roomService.updateVideoMoment(
       roomId,
@@ -78,10 +75,7 @@ export class RoomsGateway {
   }
 
   @SubscribeMessage('getVideoMoment')
-  async getVideoMoment(
-    @MessageBody('roomId') roomId: string,
-    @ConnectedSocket() client: Socket,
-  ) {
+  async getVideoMoment(@MessageBody('roomId') roomId: string) {
     const videoMoment = await this.roomService.getVideoMoment(roomId);
     return videoMoment;
   }
@@ -104,10 +98,7 @@ export class RoomsGateway {
   }
 
   @SubscribeMessage('getVideoUrl')
-  async getVideoUrl(
-    @MessageBody('roomId') roomId: string,
-    @ConnectedSocket() client: Socket,
-  ) {
+  async getVideoUrl(@MessageBody('roomId') roomId: string) {
     const videoUrl = await this.roomService.getVideoUrl(roomId);
     return videoUrl;
   }

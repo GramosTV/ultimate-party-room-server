@@ -21,10 +21,7 @@ export class MessagesGateway {
   constructor(private readonly messagesService: MessagesService) {}
 
   @SubscribeMessage('createMessage')
-  async create(
-    @MessageBody() createMessageDto: CreateMessageDto,
-    @ConnectedSocket() client: Socket,
-  ) {
+  async create(@MessageBody() createMessageDto: CreateMessageDto) {
     const message = await this.messagesService.create(createMessageDto);
     this.server.emit('message', message);
     return message;
@@ -34,6 +31,11 @@ export class MessagesGateway {
   async findAllWithId(@MessageBody('roomId') roomId: string) {
     const messages = await this.messagesService.findAllWithId(roomId);
     return messages;
+  }
+
+  @SubscribeMessage('clientId')
+  getClientId(@ConnectedSocket() client: Socket) {
+    return client.id;
   }
 
   @SubscribeMessage('join')

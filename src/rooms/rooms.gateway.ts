@@ -1,10 +1,11 @@
-import { UpdateRes, UserAction, VideoState } from 'types';
+import { UpdateRes, UserAction, VideoState, RoomAction } from 'types';
 import {
   WebSocketGateway,
   SubscribeMessage,
   MessageBody,
   ConnectedSocket,
   WebSocketServer,
+  OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { RoomsService } from './rooms.service';
 import { CreateRoomDto } from './dto/create-room.dto';
@@ -15,7 +16,7 @@ import { MessagesService } from 'src/messages/messages.service';
 import { User } from 'src/db/user/user.entity';
 import { UserService } from 'src/db/user/user.service';
 @WebSocketGateway()
-export class RoomsGateway {
+export class RoomsGateway implements OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
   constructor(
@@ -24,11 +25,36 @@ export class RoomsGateway {
     private readonly messagesService: MessagesService,
     private readonly userService: UserService,
   ) {}
-
+  async handleDisconnect(client: Socket) {
+    const roomId = await this.userService.getCurrentRoomId(client.id);
+    const room = await this.roomService.findOne(roomId);
+    if (roomId) {
+      const clientIds = (
+        await this.messagesService.getClientIdsByRoomId(roomId)
+      ).filter((item) => item !== client.id);
+      clientIds.map(async (e) => {
+        const user = await this.userService.findUserWithClientId(client.id);
+        client.to(e).emit('usersInRoom', {
+          updatedItem: user,
+          result: UserAction.left,
+        });
+      });
+      this.server.emit('room', {
+        updatedItem: room,
+        result: RoomAction.delete,
+      });
+    }
+    await this.roomService.quitRoom(client.id);
+    await this.userService.deleteUser(client.id);
+    const result = await this.roomService.checkIfEmpty(roomId);
+    if (result) {
+      this.server.emit('room', { room, roomAction: RoomAction.delete });
+    }
+  }
   @SubscribeMessage('createRoom')
   async create(@ConnectedSocket() client: Socket) {
     const room = await this.roomsService.create({ clientId: client.id });
-    this.server.emit('room', room);
+    this.server.emit('room', { room, roomAction: RoomAction.add });
     return room;
   }
 
@@ -42,6 +68,7 @@ export class RoomsGateway {
     const clientIds = (
       await this.messagesService.getClientIdsByRoomId(roomId)
     ).filter((item) => item !== client.id);
+    await this.roomService.updateVideoState(roomId, videoState);
     clientIds.map(async (e) => {
       client.to(e).emit('videoState', videoState);
     });
@@ -91,9 +118,7 @@ export class RoomsGateway {
       await this.messagesService.getClientIdsByRoomId(roomId)
     ).filter((item) => item !== client.id);
     clientIds.map(async (e) => {
-      client.to(e).emit('videoUrl', {
-        videoUrl,
-      });
+      client.to(e).emit('updateVideoUrl', videoUrl);
     });
   }
 
@@ -101,6 +126,12 @@ export class RoomsGateway {
   async getVideoUrl(@MessageBody('roomId') roomId: string) {
     const videoUrl = await this.roomService.getVideoUrl(roomId);
     return videoUrl;
+  }
+
+  @SubscribeMessage('getVideoState')
+  async getVideoState(@MessageBody('roomId') roomId: string) {
+    const videoState = await this.roomService.getVideoState(roomId);
+    return videoState;
   }
   //
 
@@ -152,16 +183,27 @@ export class RoomsGateway {
       result: joinResult ? 1 : 0,
     };
     if (joinResult !== 1) {
-      const clientIds = await this.messagesService.getClientIdsByRoomId(
-        joinResult.roomId,
-      );
-      clientIds.map(async (e) => {
-        const user = await this.userService.findUserWithClientId(client.id);
-        client.to(e).emit('usersInRoom', {
-          updatedItem: user,
-          result: UserAction.left,
+      const roomId = await this.userService.getCurrentRoomId(client.id);
+      const room = await this.roomService.findOne(roomId);
+      if (roomId) {
+        const clientIds = (
+          await this.messagesService.getClientIdsByRoomId(roomId)
+        ).filter((item) => item !== client.id);
+        clientIds.map(async (e) => {
+          const user = await this.userService.findUserWithClientId(client.id);
+          client.to(e).emit('usersInRoom', {
+            updatedItem: user,
+            result: UserAction.left,
+          });
         });
-      });
+      }
+      const result = await this.roomService.checkIfEmpty(roomId);
+      if (result) {
+        this.server.emit('room', {
+          updatedItem: room,
+          result: RoomAction.delete,
+        });
+      }
     } else {
       const clientIds = (
         await this.messagesService.getClientIdsByRoomId(roomId)

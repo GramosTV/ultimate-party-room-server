@@ -1,11 +1,12 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { Room } from './room.entity';
 import { v4 as uuid } from 'uuid';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserService } from '../user/user.service';
 import { User } from '../user/user.entity';
 import { CreateRoomDto } from 'src/rooms/dto/create-room.dto';
+import { VideoState } from 'types';
 @Injectable()
 export class RoomService {
   constructor(
@@ -57,12 +58,35 @@ export class RoomService {
     await this.roomRepository.save({
       id: roomId,
       users: [...roomWithUsers.users, user],
-      createdAt: new Date().toJSON().slice(0, 19).replace('T', ' '),
     });
+    const room = await this.findOne(roomId);
     if (quit) {
+      await this.quitRoom(quit.clientId);
+      await this.userService.joinRoom(room, clientId);
       return { roomId: quit.roomId, clientId: quit.clientId };
     }
+    await this.userService.joinRoom(room, clientId);
     return 1;
+  }
+  async quitRoom(clientId: string) {
+    const roomId = await this.userService.getCurrentRoomId(clientId);
+    if (!roomId) {
+      return;
+    }
+    const user = await this.userService.findUserWithClientId(clientId);
+    const roomWithUsers = await this.roomRepository
+      .createQueryBuilder('room')
+      .leftJoinAndSelect('room.users', 'users')
+      .where('room.id = :id', { id: roomId })
+      .getOne();
+    await this.roomRepository.save({
+      id: roomId,
+      users: [
+        ...roomWithUsers.users.filter(
+          (item) => item.clientId !== user.clientId,
+        ),
+      ],
+    });
   }
   async findOne(id: string): Promise<Room> {
     const room = await this.roomRepository.findOne({ where: { id } });
@@ -101,6 +125,17 @@ export class RoomService {
     return videoMoment;
   }
 
+  async getVideoState(roomId: string): Promise<number> {
+    const videoState = (
+      await this.roomRepository
+        .createQueryBuilder('room')
+        .select('room.videoState')
+        .where('room.id = :id', { id: roomId })
+        .getOne()
+    ).videoState;
+    return videoState;
+  }
+
   async createRoom(createRoomDto: CreateRoomDto): Promise<Room> {
     const user = await this.userService.findUserWithClientId(
       createRoomDto.clientId,
@@ -110,6 +145,7 @@ export class RoomService {
       createdAt: new Date().toJSON().slice(0, 19).replace('T', ' '),
       videoUrl: '',
       videoMoment: 0,
+      videoState: VideoState.play,
       canvas: '',
     });
     return this.roomRepository.save(newRoom);
@@ -157,10 +193,40 @@ export class RoomService {
     return updateResult;
   }
 
+  async updateVideoState(
+    roomId: string,
+    videoState: VideoState,
+  ): Promise<UpdateResult> {
+    const updateResult = await this.roomRepository.update(roomId, {
+      videoState,
+    });
+    return updateResult;
+  }
+
   async clearCanvas(roomId: string): Promise<UpdateResult> {
     const updateResult = await this.roomRepository.update(roomId, {
       canvas: '',
     });
     return updateResult;
+  }
+
+  async deleteRoom(roomId: string): Promise<DeleteResult> {
+    const deleteUserResult = this.roomRepository.delete({
+      id: roomId,
+    });
+    return deleteUserResult;
+  }
+
+  async checkIfEmpty(roomId: string) {
+    const roomWithUsers = await this.roomRepository
+      .createQueryBuilder('room')
+      .leftJoinAndSelect('room.users', 'users')
+      .where('room.id = :id', { id: roomId })
+      .getOne();
+    if (!roomWithUsers?.users.length) {
+      this.deleteRoom(roomId);
+      return true;
+    }
+    return false;
   }
 }

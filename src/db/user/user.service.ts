@@ -1,6 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DeleteResult, Repository, UpdateResult } from 'typeorm';
+import { Room } from '../room/room.entity';
 import { User } from './user.entity';
 @Injectable()
 export class UserService {
@@ -8,6 +9,11 @@ export class UserService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {}
+
+  async findOneByClientId(clientId: string) {
+    const user = await this.userRepository.findOne({ where: { clientId } });
+    return user;
+  }
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
@@ -30,10 +36,13 @@ export class UserService {
       .leftJoinAndSelect('user.room', 'room')
       .where('user.clientId = :clientId', { clientId })
       .getOne();
-    await this.userRepository.save({
-      id: userWithRoom.id,
-      room: null,
-    });
+    if (userWithRoom.id) {
+      await this.userRepository.save({
+        id: userWithRoom.id,
+        room: null,
+      });
+    }
+
     if (userWithRoom.room) {
       return { roomId: userWithRoom.room.id, clientId: userWithRoom.clientId };
     }
@@ -50,5 +59,43 @@ export class UserService {
       profilePicture,
     });
     return this.userRepository.save(newUser);
+  }
+
+  async deleteUser(clientId: string): Promise<DeleteResult> {
+    const deleteUserResult = this.userRepository.delete({
+      clientId,
+    });
+    return deleteUserResult;
+  }
+
+  async getCurrentRoomId(clientId: string) {
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.room', 'room')
+      .where('user.clientId = :clientId', { clientId })
+      .getOne();
+    if (user?.room) {
+      return user.room.id;
+    }
+    return null;
+  }
+
+  async joinRoom(room: Room, clientId: string) {
+    const id = (await this.findUserWithClientId(clientId)).id;
+    await this.userRepository.save({
+      id,
+      room,
+    });
+  }
+
+  async updateProfilePicture(
+    clientId: string,
+    profilePicture: string,
+  ): Promise<UpdateResult> {
+    const id = (await this.findOneByClientId(clientId))?.id;
+    const updateResult = await this.userRepository.update(id, {
+      profilePicture,
+    });
+    return updateResult;
   }
 }

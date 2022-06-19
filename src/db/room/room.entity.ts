@@ -1,4 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { VideoState } from 'types';
 import { Message } from '../message/message.entity';
 import { User } from '../user/user.entity';
 
@@ -15,6 +16,9 @@ export class Room {
 
   @Column({ type: 'decimal', precision: 20, scale: 19, default: 0 })
   videoMoment: number;
+
+  @Column()
+  videoState: VideoState;
 
   @Column({ length: 65535 })
   canvas: string;

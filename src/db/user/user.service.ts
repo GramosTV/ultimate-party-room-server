@@ -1,5 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { unlinkSync } from 'fs';
+import { join } from 'path';
 import { DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { Room } from '../room/room.entity';
 import { User } from './user.entity';
@@ -62,6 +64,18 @@ export class UserService {
   }
 
   async deleteUser(clientId: string): Promise<DeleteResult> {
+    const user = await this.findOneByClientId(clientId);
+    if (user?.profilePicture) {
+      try {
+        const pfpPath = join(
+          process.cwd(),
+          '\\src\\uploads\\profilePictures\\',
+        );
+        unlinkSync(pfpPath + user.profilePicture);
+      } catch (err) {
+        console.error(err);
+      }
+    }
     const deleteUserResult = this.userRepository.delete({
       clientId,
     });
@@ -93,9 +107,12 @@ export class UserService {
     profilePicture: string,
   ): Promise<UpdateResult> {
     const id = (await this.findOneByClientId(clientId))?.id;
-    const updateResult = await this.userRepository.update(id, {
-      profilePicture,
-    });
-    return updateResult;
+    if (profilePicture) {
+      const updateResult = await this.userRepository.update(id, {
+        profilePicture,
+      });
+      return updateResult;
+    }
+    return { raw: 0, generatedMaps: [] };
   }
 }

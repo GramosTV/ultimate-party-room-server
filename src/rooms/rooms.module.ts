@@ -12,13 +12,6 @@ import { MessagesService } from 'src/messages/messages.service';
 
 @Module({
   imports: [MessageModule, UserModule, RoomModule, MessagesModule],
-  providers: [
-    RoomsGateway,
-    RoomsService,
-    MessageService,
-    UserService,
-    RoomService,
-    MessagesService,
-  ],
+  providers: [RoomsGateway, RoomsService],
 })
 export class RoomsModule {}

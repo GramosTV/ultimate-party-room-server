@@ -9,12 +9,7 @@ import { RoomModule } from 'src/db/room/room.module';
 import { RoomService } from 'src/db/room/room.service';
 @Module({
   imports: [MessageModule, UserModule, RoomModule],
-  providers: [
-    MessagesGateway,
-    MessagesService,
-    MessageService,
-    UserService,
-    RoomService,
-  ],
+  providers: [MessagesGateway, MessagesService],
+  exports: [MessagesService],
 })
 export class MessagesModule {}

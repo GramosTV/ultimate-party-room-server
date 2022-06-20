@@ -12,7 +12,7 @@ export class RoomService {
   constructor(
     @InjectRepository(Room)
     private roomRepository: Repository<Room>,
-    private readonly userService: UserService,
+    @Inject(UserService) private userService: UserService,
   ) {}
 
   async findAll(): Promise<Room[]> {

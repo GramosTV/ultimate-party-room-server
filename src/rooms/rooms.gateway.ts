@@ -15,15 +15,16 @@ import { Socket, Server } from 'socket.io';
 import { MessagesService } from 'src/messages/messages.service';
 import { User } from 'src/db/user/user.entity';
 import { UserService } from 'src/db/user/user.service';
+import { Inject } from '@nestjs/common';
 @WebSocketGateway()
 export class RoomsGateway implements OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
   constructor(
     private readonly roomsService: RoomsService,
-    private readonly roomService: RoomService,
-    private readonly messagesService: MessagesService,
-    private readonly userService: UserService,
+    @Inject(RoomService) private roomService: RoomService,
+    @Inject(MessagesService) private messagesService: MessagesService,
+    @Inject(UserService) private userService: UserService,
   ) {}
   async handleDisconnect(client: Socket) {
     const roomId = await this.userService.getCurrentRoomId(client.id);

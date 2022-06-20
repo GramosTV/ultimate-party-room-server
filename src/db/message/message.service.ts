@@ -10,7 +10,7 @@ export class MessageService {
   constructor(
     @InjectRepository(Message)
     private messageRepository: Repository<Message>,
-    private readonly roomService: RoomService,
+    @Inject(RoomService) private roomService: RoomService,
   ) {}
 
   async findAll(): Promise<Message[]> {

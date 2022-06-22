@@ -13,10 +13,13 @@ import { UpdateRoomDto } from './dto/update-room.dto';
 import { RoomService } from 'src/db/room/room.service';
 import { Socket, Server } from 'socket.io';
 import { MessagesService } from 'src/messages/messages.service';
-import { User } from 'src/db/user/user.entity';
 import { UserService } from 'src/db/user/user.service';
 import { Inject } from '@nestjs/common';
-@WebSocketGateway()
+@WebSocketGateway({
+  cors: {
+    origin: '*',
+  },
+})
 export class RoomsGateway implements OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
@@ -27,30 +30,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
     @Inject(UserService) private userService: UserService,
   ) {}
   async handleDisconnect(client: Socket) {
-    const roomId = await this.userService.getCurrentRoomId(client.id);
-    const room = await this.roomService.findOne(roomId);
-    if (roomId) {
-      const clientIds = (
-        await this.messagesService.getClientIdsByRoomId(roomId)
-      ).filter((item) => item !== client.id);
-      clientIds.map(async (e) => {
-        const user = await this.userService.findUserWithClientId(client.id);
-        client.to(e).emit('usersInRoom', {
-          updatedItem: user,
-          result: UserAction.left,
-        });
-      });
-      this.server.emit('room', {
-        updatedItem: room,
-        result: RoomAction.delete,
-      });
-    }
-    await this.roomService.quitRoom(client.id);
-    await this.userService.deleteUser(client.id);
-    const result = await this.roomService.checkIfEmpty(roomId);
-    if (result) {
-      this.server.emit('room', { room, roomAction: RoomAction.delete });
-    }
+    await this.roomsService.handleDisconnect(client, this.server);
   }
   @SubscribeMessage('createRoom')
   async create(@ConnectedSocket() client: Socket) {
@@ -66,13 +46,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
     @MessageBody('videoState') videoState: VideoState,
     @ConnectedSocket() client: Socket,
   ) {
-    const clientIds = (
-      await this.messagesService.getClientIdsByRoomId(roomId)
-    ).filter((item) => item !== client.id);
-    await this.roomService.updateVideoState(roomId, videoState);
-    clientIds.map(async (e) => {
-      client.to(e).emit('videoState', videoState);
-    });
+    await this.roomsService.videoState(roomId, videoState, client);
   }
 
   @SubscribeMessage('videoMoment')
@@ -81,12 +55,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
     @MessageBody('videoMoment') videoMoment: number,
     @ConnectedSocket() client: Socket,
   ) {
-    const clientIds = (
-      await this.messagesService.getClientIdsByRoomId(roomId)
-    ).filter((item) => item !== client.id);
-    clientIds.map(async (e) => {
-      client.to(e).emit('videoMoment', videoMoment);
-    });
+    await this.roomsService.videoMoment(roomId, videoMoment, client);
   }
 
   // The difference between this method and the one above is that this one updates the video moment for new users that'll join the room and not for the users that are already in the room.
@@ -95,17 +64,12 @@ export class RoomsGateway implements OnGatewayDisconnect {
     @MessageBody('roomId') roomId: string,
     @MessageBody('videoMoment') videoMoment: number,
   ) {
-    const updateResult = await this.roomService.updateVideoMoment(
-      roomId,
-      videoMoment,
-    );
-    return updateResult;
+    return this.roomsService.updateVideoMoment(roomId, videoMoment);
   }
 
   @SubscribeMessage('getVideoMoment')
   async getVideoMoment(@MessageBody('roomId') roomId: string) {
-    const videoMoment = await this.roomService.getVideoMoment(roomId);
-    return videoMoment;
+    return await this.roomsService.getVideoMoment(roomId);
   }
 
   @SubscribeMessage('updateVideoUrl')
@@ -114,33 +78,24 @@ export class RoomsGateway implements OnGatewayDisconnect {
     @MessageBody('videoUrl') videoUrl: string,
     @ConnectedSocket() client: Socket,
   ) {
-    const result = await this.roomService.updateVideoUrl(roomId, videoUrl);
-    const clientIds = (
-      await this.messagesService.getClientIdsByRoomId(roomId)
-    ).filter((item) => item !== client.id);
-    clientIds.map(async (e) => {
-      client.to(e).emit('updateVideoUrl', videoUrl);
-    });
+    return await this.roomsService.updateVideoUrl(roomId, videoUrl, client);
   }
 
   @SubscribeMessage('getVideoUrl')
   async getVideoUrl(@MessageBody('roomId') roomId: string) {
-    const videoUrl = await this.roomService.getVideoUrl(roomId);
-    return videoUrl;
+    return await this.roomsService.getVideoUrl(roomId);
   }
 
   @SubscribeMessage('getVideoState')
   async getVideoState(@MessageBody('roomId') roomId: string) {
-    const videoState = await this.roomService.getVideoState(roomId);
-    return videoState;
+    return await this.roomsService.getVideoState(roomId);
   }
   //
 
-  // CANVAS GATEWAY
+  // ROOM's CANVAS GATEWAY
   @SubscribeMessage('getCanvas')
   async getCanvas(@MessageBody('roomId') roomId: string) {
-    const canvas = await this.roomService.getCanvas(roomId);
-    return canvas;
+    return await this.roomsService.getCanvas(roomId);
   }
 
   @SubscribeMessage('canvasChange')
@@ -149,13 +104,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
     @MessageBody('canvasAction') canvasAction: string,
     @ConnectedSocket() client: Socket,
   ) {
-    await this.roomService.updateCanvas(roomId, canvasAction);
-    const clientIds = (
-      await this.messagesService.getClientIdsByRoomId(roomId)
-    ).filter((item) => item !== client.id);
-    clientIds.map(async (e) => {
-      client.to(e).emit('canvasChange', canvasAction);
-    });
+    await this.roomsService.canvasChange(roomId, canvasAction, client);
   }
 
   @SubscribeMessage('canvasClean')
@@ -163,13 +112,21 @@ export class RoomsGateway implements OnGatewayDisconnect {
     @MessageBody('roomId') roomId: string,
     @ConnectedSocket() client: Socket,
   ) {
-    await this.roomService.clearCanvas(roomId);
-    const clientIds = (
-      await this.messagesService.getClientIdsByRoomId(roomId)
-    ).filter((item) => item !== client.id);
-    clientIds.map(async (e) => {
-      client.to(e).emit('canvasClean');
-    });
+    await this.roomsService.canvasClean(roomId, client);
+  }
+
+  @SubscribeMessage('getCanvasBgc')
+  async getCanvasBgc(@MessageBody('roomId') roomId: string) {
+    return await this.roomsService.getCanvasBgc(roomId);
+  }
+
+  @SubscribeMessage('updateCanvasBgc')
+  async updateCanvasBgc(
+    @MessageBody('roomId') roomId: string,
+    @MessageBody('canvasBgc') canvasBgc: string,
+    @ConnectedSocket() client: Socket,
+  ) {
+    await this.roomsService.updateCanvasBgc(roomId, canvasBgc, client);
   }
   //
   @SubscribeMessage('joinRoom')
@@ -177,71 +134,29 @@ export class RoomsGateway implements OnGatewayDisconnect {
     @MessageBody('roomId') roomId: string,
     @ConnectedSocket() client: Socket,
   ) {
-    const joinResult = await this.roomService.joinRoom(roomId, client.id);
-    const room = await this.roomService.findOne(roomId);
-    const updateResult: UpdateRes = {
-      updatedItem: room,
-      result: joinResult ? 1 : 0,
-    };
-    if (joinResult !== 1) {
-      const roomId = await this.userService.getCurrentRoomId(client.id);
-      const room = await this.roomService.findOne(roomId);
-      if (roomId) {
-        const clientIds = (
-          await this.messagesService.getClientIdsByRoomId(roomId)
-        ).filter((item) => item !== client.id);
-        clientIds.map(async (e) => {
-          const user = await this.userService.findUserWithClientId(client.id);
-          client.to(e).emit('usersInRoom', {
-            updatedItem: user,
-            result: UserAction.left,
-          });
-        });
-      }
-      const result = await this.roomService.checkIfEmpty(roomId);
-      if (result) {
-        this.server.emit('room', {
-          updatedItem: room,
-          result: RoomAction.delete,
-        });
-      }
-    } else {
-      const clientIds = (
-        await this.messagesService.getClientIdsByRoomId(roomId)
-      ).filter((item) => item !== client.id);
-      clientIds.map(async (e) => {
-        const user = await this.userService.findUserWithClientId(client.id);
-        client.to(e).emit('usersInRoom', {
-          updatedItem: user,
-          result: UserAction.joined,
-        });
-      });
-    }
-    return updateResult;
+    return await this.roomsService.joinRoom(roomId, client, this.server);
   }
   @SubscribeMessage('findAllUsersInRoom')
   async findAllUsersInRoom(@MessageBody('roomId') roomId: string) {
-    const usersInRoom = await this.roomService.findAllUsersInRoom(roomId);
-    return usersInRoom;
+    return await this.roomsService.findAllUsersInRoom(roomId);
   }
   @SubscribeMessage('findAllRooms')
   async findAll() {
-    const rooms = await this.roomsService.findAll();
-    return rooms;
+    return await this.roomsService.findAll();
   }
 
-  @SubscribeMessage('findOneRoom')
-  findOne(@MessageBody() id: number) {
-    return this.roomsService.findOne(id);
-  }
+  // @SubscribeMessage('findOneRoom')
+  // findOne(@MessageBody() id: number) {
+  //   return this.roomsService.findOne(id);
+  // }
 
-  @SubscribeMessage('updateRoom')
-  update(@MessageBody() updateRoomDto: UpdateRoomDto) {
-    return this.roomsService.update(updateRoomDto.id, updateRoomDto);
-  }
+  // @SubscribeMessage('updateRoom')
+  // update(@MessageBody() updateRoomDto: UpdateRoomDto) {
+  //   return this.roomsService.update(updateRoomDto.id, updateRoomDto);
+  // }
 
-  @SubscribeMessage('removeRoom')
-  remove(@MessageBody() id: number) {
-    return this.roomsService.remove(id);
-  }
+  // @SubscribeMessage('removeRoom')
+  // remove(@MessageBody() id: number) {
+  //   return this.roomsService.remove(id);
+  // }
 }

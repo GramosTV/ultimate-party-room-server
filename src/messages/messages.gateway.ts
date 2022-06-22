@@ -22,15 +22,15 @@ export class MessagesGateway {
 
   @SubscribeMessage('createMessage')
   async create(@MessageBody() createMessageDto: CreateMessageDto) {
-    const message = await this.messagesService.create(createMessageDto);
-    this.server.emit('message', message);
-    return message;
+    return await this.messagesService.createMessage(
+      createMessageDto,
+      this.server,
+    );
   }
 
   @SubscribeMessage('findAllMessages')
   async findAllWithId(@MessageBody('roomId') roomId: string) {
-    const messages = await this.messagesService.findAllWithId(roomId);
-    return messages;
+    return await this.messagesService.findAllWithId(roomId);
   }
 
   @SubscribeMessage('clientId')
@@ -52,12 +52,7 @@ export class MessagesGateway {
     @MessageBody('roomId') roomId: string,
     @ConnectedSocket() client: Socket,
   ) {
-    let clientIds = await this.messagesService.getClientIdsByRoomId(roomId);
-    const name = await this.messagesService.getClientName(client.id);
-    clientIds = clientIds.filter((item) => item !== client.id);
-    clientIds.map((e) => {
-      client.to(e).emit('typing', { name, isTyping });
-    });
+    await this.messagesService.typing(isTyping, roomId, client);
     // client.broadcast.emit('typing', { name, isTyping });
   }
   // @SubscribeMessage('findOneMessage')

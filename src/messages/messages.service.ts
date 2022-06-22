@@ -6,7 +6,7 @@ import { UserService } from 'src/db/user/user.service';
 import { MessageEntity } from 'types';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
-
+import { Server, Socket } from 'socket.io';
 @Injectable()
 export class MessagesService {
   constructor(
@@ -44,19 +44,30 @@ export class MessagesService {
       text: createMessageDto.text,
       roomId: createMessageDto.roomId,
     };
-    await this.messageService.createMessage(
+    return await this.messageService.createMessage(
       createMessageDto.name,
       createMessageDto.text,
       createMessageDto.roomId,
     );
-    return message;
   }
 
   async findAllWithId(roomId: string): Promise<Message[]> {
     const messages = await this.messageService.findAllWithId(roomId);
     return messages;
   }
-
+  async typing(isTyping: boolean, roomId: string, client: Socket) {
+    let clientIds = await this.getClientIdsByRoomId(roomId);
+    const name = await this.getClientName(client.id);
+    clientIds = clientIds.filter((item) => item !== client.id);
+    clientIds.map((e) => {
+      client.to(e).emit('typing', { name, isTyping });
+    });
+  }
+  async createMessage(createMessageDto: CreateMessageDto, server: Server) {
+    const message = await this.create(createMessageDto);
+    server.emit('message', message);
+    return message;
+  }
   // findOne(id: number) {
   //   return `This action returns a #${id} message`;
   // }

@@ -4,4 +4,5 @@ export class RoomEntity {
   videoUrl: string;
   videoMoment: number;
   canvas: string;
+  canvasBgc: string;
 }

@@ -15,6 +15,10 @@ export class User {
   @Column()
   profilePicture: string;
 
+  @Column({
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  createdAt: Date;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // eslint-disable-next-line prettier/prettier
   @ManyToOne(type => Room, (room) => room.users)

@@ -8,7 +8,9 @@ export class Room {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   createdAt: Date;
 
   @Column({ length: 100 })
@@ -22,6 +24,9 @@ export class Room {
 
   @Column({ length: 65535 })
   canvas: string;
+
+  @Column()
+  canvasBgc: string;
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // eslint-disable-next-line prettier/prettier

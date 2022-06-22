@@ -14,9 +14,9 @@ export class Message {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // eslint-disable-next-line prettier/prettier
-  @ManyToOne(type => Room, (room) => room.messages)
+  @ManyToOne((type) => Room, (room) => room.messages)
   room: Room;
 
-  @Column({ type: 'datetime' })
+  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 }

@@ -12,6 +12,8 @@ import { User } from './db/user/user.entity';
 import { Message } from './db/message/message.entity';
 import { Room } from './db/room/room.entity';
 import { PhotosModule } from './photos/photos.module';
+import { VideosController } from './videos/videos.controller';
+import { VideosModule } from './videos/videos.module';
 @Module({
   imports: [
     MessagesModule,
@@ -26,12 +28,19 @@ import { PhotosModule } from './photos/photos.module';
       username: 'root',
       database: 'ultimate_party_room',
       entities: [Message, User, Room],
-      synchronize: true,
       autoLoadEntities: true,
+      bigNumberStrings: false,
+      synchronize: true, // TRUE ONLY FOR DEVELOPMENT
+      // logging: true,
+      // migrations: ['dist/migration/*.js'], PRODUCTION
+      // cli: {
+      //   migrationsDir: 'migration',
+      // },
     }),
     PhotosModule,
+    VideosModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, VideosController],
   providers: [AppService],
 })
 export class AppModule {

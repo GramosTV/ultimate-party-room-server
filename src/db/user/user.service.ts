@@ -30,7 +30,7 @@ export class UserService {
       .select(['user.name'])
       .where({ clientId })
       .getOne();
-    return userName.name;
+    return userName?.name;
   }
   async quitRoom(clientId: string) {
     const userWithRoom = await this.userRepository
@@ -108,10 +108,14 @@ export class UserService {
   ): Promise<UpdateResult> {
     const id = (await this.findOneByClientId(clientId))?.id;
     if (profilePicture) {
-      const updateResult = await this.userRepository.update(id, {
-        profilePicture,
-      });
-      return updateResult;
+      try {
+        const updateResult = await this.userRepository.update(id, {
+          profilePicture,
+        });
+        return updateResult;
+      } catch (err) {
+        console.log('Nothing to delete');
+      }
     }
     return { raw: 0, generatedMaps: [] };
   }

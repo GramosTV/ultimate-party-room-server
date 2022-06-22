@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { DeleteResult, Repository, UpdateResult } from 'typeorm';
 import { Room } from './room.entity';
 import { v4 as uuid } from 'uuid';
@@ -7,12 +7,17 @@ import { UserService } from '../user/user.service';
 import { User } from '../user/user.entity';
 import { CreateRoomDto } from 'src/rooms/dto/create-room.dto';
 import { VideoState } from 'types';
+import { MessageService } from '../message/message.service';
+import { unlinkSync } from 'fs';
+import { join } from 'path';
 @Injectable()
 export class RoomService {
   constructor(
     @InjectRepository(Room)
     private roomRepository: Repository<Room>,
     @Inject(UserService) private userService: UserService,
+    @Inject(forwardRef(() => MessageService))
+    private messageService: MessageService,
   ) {}
 
   async findAll(): Promise<Room[]> {
@@ -41,7 +46,7 @@ export class RoomService {
       .leftJoinAndSelect('room.users', 'users')
       .where('room.id = :id', { id: roomId })
       .getOne();
-    return roomWithUsers.users;
+    return roomWithUsers?.users;
   }
   async joinRoom(
     roomId: string,
@@ -110,8 +115,19 @@ export class RoomService {
         .select('room.videoUrl')
         .where('room.id = :id', { id: roomId })
         .getOne()
-    ).videoUrl;
+    )?.videoUrl;
     return videoUrl;
+  }
+
+  async getCanvasBgc(roomId: string): Promise<string> {
+    const canvasBgc = (
+      await this.roomRepository
+        .createQueryBuilder('room')
+        .select('room.canvasBgc')
+        .where('room.id = :id', { id: roomId })
+        .getOne()
+    )?.canvasBgc;
+    return canvasBgc;
   }
 
   async getVideoMoment(roomId: string): Promise<number> {
@@ -121,7 +137,7 @@ export class RoomService {
         .select('room.videoMoment')
         .where('room.id = :id', { id: roomId })
         .getOne()
-    ).videoMoment;
+    )?.videoMoment;
     return videoMoment;
   }
 
@@ -132,7 +148,7 @@ export class RoomService {
         .select('room.videoState')
         .where('room.id = :id', { id: roomId })
         .getOne()
-    ).videoState;
+    )?.videoState;
     return videoState;
   }
 
@@ -142,11 +158,12 @@ export class RoomService {
     );
     const newRoom = this.roomRepository.create({
       users: [user],
-      createdAt: new Date().toJSON().slice(0, 19).replace('T', ' '),
       videoUrl: '',
       videoMoment: 0,
       videoState: VideoState.play,
       canvas: '',
+      canvasBgc:
+        'https://upload.wikimedia.org/wikipedia/commons/7/70/Graph_paper_scan_1600x1000_%286509259561%29.jpg',
     });
     return this.roomRepository.save(newRoom);
   }
@@ -177,10 +194,28 @@ export class RoomService {
     roomId: string,
     videoUrl: string,
   ): Promise<UpdateResult> {
-    const updateResult = await this.roomRepository.update(roomId, {
-      videoUrl,
-    });
-    return updateResult;
+    if (videoUrl) {
+      const updateResult = await this.roomRepository.update(roomId, {
+        videoUrl,
+      });
+      return updateResult;
+    } else {
+      return { raw: 0, generatedMaps: [] };
+    }
+  }
+
+  async updateCanvasBgc(
+    roomId: string,
+    canvasBgc: string,
+  ): Promise<UpdateResult> {
+    if (canvasBgc) {
+      const updateResult = await this.roomRepository.update(roomId, {
+        canvasBgc,
+      });
+      return updateResult;
+    } else {
+      return { raw: 0, generatedMaps: [] };
+    }
   }
 
   async updateVideoMoment(
@@ -211,6 +246,11 @@ export class RoomService {
   }
 
   async deleteRoom(roomId: string): Promise<DeleteResult> {
+    await this.deleteVideo(roomId);
+    const messages = await this.messageService.findAllWithId(roomId);
+    messages.map(async (message) => {
+      await this.messageService.delete(message.id);
+    });
     const deleteUserResult = this.roomRepository.delete({
       id: roomId,
     });
@@ -228,5 +268,19 @@ export class RoomService {
       return true;
     }
     return false;
+  }
+  async deleteVideo(roomId: string): Promise<boolean> {
+    const room = await this.findOne(roomId);
+    if (String(room?.videoUrl).includes('http://localhost')) {
+      try {
+        const vidPath = join(process.cwd(), '\\src\\uploads\\videos\\');
+        unlinkSync(vidPath + room.videoUrl.split('/')[4]);
+        return true;
+      } catch (err) {
+        return false;
+      }
+    } else {
+      return false;
+    }
   }
 }

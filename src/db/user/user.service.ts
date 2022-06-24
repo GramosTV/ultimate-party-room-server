@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { unlinkSync } from 'fs';
 import { join } from 'path';
-import { DeleteResult, Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, Like, Repository, UpdateResult } from 'typeorm';
 import { Room } from '../room/room.entity';
 import { User } from './user.entity';
 @Injectable()
@@ -11,6 +11,12 @@ export class UserService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {}
+  async deleteAll(): Promise<DeleteResult> {
+    const res = await this.userRepository.delete({
+      id: Like('%%')
+    });
+    return res;
+  }
 
   async findOneByClientId(clientId: string) {
     const user = await this.userRepository.findOne({ where: { clientId } });

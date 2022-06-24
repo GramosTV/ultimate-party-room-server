@@ -13,14 +13,48 @@ import {
   VideoState,
 } from 'types';
 import { User } from 'src/db/user/user.entity';
+import { MessageService } from 'src/db/message/message.service';
+import { readdir, unlink } from 'fs';
+import { join } from 'path';
 @Injectable()
 export class RoomsService {
+  async beforeApplicationShutdown() {
+    console.log('shutdown')
+    await this.roomService.deleteAll()
+    await this.messageService.deleteAll()
+    await this.userService.deleteAll()
+    this.deleteAllVideos()
+    this.deleteAllPhotos()
+  }
+  deleteAllVideos() {
+    const directory = join(process.cwd(), '\\src\\uploads\\videos\\');
+    readdir(directory, (err, files) => {
+      if (err) throw err;
+      for (const file of files) {
+        unlink(join(directory, file), err => {
+          if (err) throw err;
+        });
+      }
+    });
+  }
+  deleteAllPhotos() {
+    const directory = join(process.cwd(), '\\src\\uploads\\profilePictures\\');
+    readdir(directory, (err, files) => {
+      if (err) throw err;
+      for (const file of files) {
+        if (file === 'default.png') return;
+        unlink(join(directory, file), err => {
+          if (err) throw err;
+        });
+      }
+    });
+  }
   constructor(
     @Inject(RoomService) private roomService: RoomService,
     @Inject(MessagesService) private messagesService: MessagesService,
     @Inject(UserService) private userService: UserService,
+    @Inject(MessageService) private messageService: MessageService,
   ) {}
-
   async create(createRoomDto: CreateRoomDto) {
     const room = await this.roomService.createRoom(createRoomDto);
     return room;
@@ -51,7 +85,7 @@ export class RoomsService {
     }
     await this.roomService.quitRoom(client.id);
     await this.userService.deleteUser(client.id);
-    const result = await this.roomService.checkIfEmpty(roomId);
+    const result = await this.roomService.CleanRoomIfEmpty(roomId);
     if (result) {
       server.emit('room', { room, roomAction: RoomAction.delete });
     }
@@ -205,7 +239,7 @@ export class RoomsService {
           });
         });
       }
-      const result = await this.roomService.checkIfEmpty(roomId);
+      const result = await this.roomService.CleanRoomIfEmpty(roomId);
       if (result) {
         server.emit('room', {
           updatedItem: room,

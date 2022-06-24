@@ -30,11 +30,15 @@ export class Room {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // eslint-disable-next-line prettier/prettier
-  @OneToMany(type => Message, (message) => message.room)
+  @OneToMany(type => Message, (message) => message.room, {
+    onDelete: "CASCADE"
+})
   messages: Message[];
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // eslint-disable-next-line prettier/prettier
-  @OneToMany(type => User, (user) => user.room)
+  @OneToMany(type => User, (user) => user.room, {
+    onDelete: "CASCADE"
+})
   users: User[];
 }

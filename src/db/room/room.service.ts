@@ -1,5 +1,5 @@
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
-import { DeleteResult, Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, Like, Repository, UpdateResult } from 'typeorm';
 import { Room } from './room.entity';
 import { v4 as uuid } from 'uuid';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -24,6 +24,12 @@ export class RoomService {
     const rooms = await this.roomRepository.find();
     return rooms;
   }
+  async deleteAll(): Promise<DeleteResult> {
+    const res = await this.roomRepository.delete({
+      id: Like('%%')
+    });
+    return res;
+  } 
 
   // Instead of any[] should be string[] but typeorm query builder doesn't let me
   async getClientIds(roomId: string): Promise<any[]> {
@@ -246,18 +252,23 @@ export class RoomService {
   }
 
   async deleteRoom(roomId: string): Promise<DeleteResult> {
-    await this.deleteVideo(roomId);
-    const messages = await this.messageService.findAllWithId(roomId);
-    messages.map(async (message) => {
-      await this.messageService.delete(message.id);
-    });
-    const deleteUserResult = this.roomRepository.delete({
-      id: roomId,
-    });
-    return deleteUserResult;
+    try {
+      await this.deleteVideo(roomId);
+      const messages = await this.messageService.findAllWithRoomId(roomId);
+      messages.map(async (message) => {  
+        await this.messageService.delete(message.id);
+      });
+      const deleteUserResult = this.roomRepository.delete({
+        id: roomId,
+      });
+      return deleteUserResult;
+    } catch (err) {
+      console.log(err);
+      return { raw: 0 }
+    }
   }
 
-  async checkIfEmpty(roomId: string) {
+  async CleanRoomIfEmpty(roomId: string) {
     const roomWithUsers = await this.roomRepository
       .createQueryBuilder('room')
       .leftJoinAndSelect('room.users', 'users')

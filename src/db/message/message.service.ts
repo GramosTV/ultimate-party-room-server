@@ -1,6 +1,6 @@
 import { Message } from './message.entity';
 import { Injectable, Inject, forwardRef } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { DeleteResult, Like, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { v4 as uuid } from 'uuid';
 import { Room } from '../room/room.entity';
@@ -13,6 +13,13 @@ export class MessageService {
     @Inject(forwardRef(() => RoomService)) private roomService: RoomService,
   ) {}
 
+  async deleteAll(): Promise<DeleteResult> {
+    const res = await this.messageRepository.delete({
+      id: Like('%%')
+    });
+    return res;
+  }
+
   async findAll(): Promise<Message[]> {
     return this.messageRepository.find({
       order: {
@@ -22,7 +29,7 @@ export class MessageService {
     });
   }
 
-  async findAllWithId(id: string): Promise<Message[]> {
+  async findAllWithRoomId(id: string): Promise<Message[]> {
     const messages = await this.messageRepository
       .createQueryBuilder('message')
       .leftJoinAndSelect('message.room', 'room')

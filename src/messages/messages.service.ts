@@ -51,7 +51,7 @@ export class MessagesService {
     if(!roomId) {
       return;
     }
-    const messages = await this.messageService.findAllWithId(roomId);
+    const messages = await this.messageService.findAllWithRoomId(roomId);
     return messages;
   }
   async typing(isTyping: boolean, client: Socket) {

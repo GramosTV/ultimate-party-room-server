@@ -21,6 +21,8 @@ export class User {
   createdAt: Date;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // eslint-disable-next-line prettier/prettier
-  @ManyToOne(type => Room, (room) => room.users)
+  @ManyToOne(type => Room, (room) => room.users, {
+    onDelete: "CASCADE"
+})
   room: Room;
 }

@@ -58,7 +58,11 @@ export class RoomsService {
   }
 
   // VIDEO SERVICE
-  async videoState(roomId: string, videoState: VideoState, client: Socket) {
+  async videoState(videoState: VideoState, client: Socket) {
+    const roomId = await this.userService.findRoomIdWithClientId(client.id);
+    if(!roomId) {
+      return;
+    }
     const user = await this.userService.findOneByClientId(client.id);
     const clientIds = (
       await this.messagesService.getClientIdsByRoomId(roomId)
@@ -68,7 +72,11 @@ export class RoomsService {
       client.to(e).emit('videoState', { videoState, user });
     });
   }
-  async videoMoment(roomId: string, videoMoment: number, client: Socket) {
+  async videoMoment(videoMoment: number, client: Socket) {
+    const roomId = await this.userService.findRoomIdWithClientId(client.id);
+    if(!roomId) {
+      return;
+    }
     const user = await this.userService.findOneByClientId(client.id);
     const clientIds = (
       await this.messagesService.getClientIdsByRoomId(roomId)
@@ -77,13 +85,25 @@ export class RoomsService {
       client.to(e).emit('videoMoment', { videoMoment, user });
     });
   }
-  async updateVideoMoment(roomId: string, videoMoment: number) {
+  async updateVideoMoment(videoMoment: number, client: Socket) {
+    const roomId = await this.userService.findRoomIdWithClientId(client.id);
+    if(!roomId) {
+      return;
+    }
     return await this.roomService.updateVideoMoment(roomId, videoMoment);
   }
-  async getVideoMoment(roomId: string) {
+  async getVideoMoment(client: Socket) {
+    const roomId = await this.userService.findRoomIdWithClientId(client.id);
+    if(!roomId) {
+      return;
+    }
     return await this.roomService.getVideoMoment(roomId);
   }
-  async updateVideoUrl(roomId: string, videoUrl: string, client: Socket) {
+  async updateVideoUrl(videoUrl: string, client: Socket) {
+    const roomId = await this.userService.findRoomIdWithClientId(client.id);
+    if(!roomId) {
+      return;
+    }
     const user = await this.userService.findOneByClientId(client.id);
     await this.roomService.updateVideoUrl(roomId, videoUrl);
     const clientIds = (
@@ -94,18 +114,34 @@ export class RoomsService {
     });
     return videoUrl;
   }
-  async getVideoUrl(roomId: string) {
+  async getVideoUrl(client: Socket) {
+    const roomId = await this.userService.findRoomIdWithClientId(client.id);
+    if(!roomId) {
+      return;
+    }
     return await this.roomService.getVideoUrl(roomId);
   }
-  async getVideoState(roomId: string) {
+  async getVideoState(client: Socket) {
+    const roomId = await this.userService.findRoomIdWithClientId(client.id);
+    if(!roomId) {
+      return;
+    }
     return await this.roomService.getVideoState(roomId);
   }
   // ROOM's CANVAS GATEWAY
 
-  async getCanvas(roomId: string) {
+  async getCanvas(client: Socket) {
+    const roomId = await this.userService.findRoomIdWithClientId(client.id);
+    if(!roomId) {
+      return;
+    }
     return await this.roomService.getCanvas(roomId);
   }
-  async canvasChange(roomId: string, canvasAction: string, client: Socket) {
+  async canvasChange(canvasAction: string, client: Socket) {
+    const roomId = await this.userService.findRoomIdWithClientId(client.id);
+    if(!roomId) {
+      return;
+    }
     await this.roomService.updateCanvas(roomId, canvasAction);
     const clientIds = (
       await this.messagesService.getClientIdsByRoomId(roomId)
@@ -114,7 +150,11 @@ export class RoomsService {
       client.to(e).emit('canvasChange', canvasAction);
     });
   }
-  async canvasClean(roomId: string, client: Socket) {
+  async canvasClean(client: Socket) {
+    const roomId = await this.userService.findRoomIdWithClientId(client.id);
+    if(!roomId) {
+      return;
+    }
     await this.roomService.clearCanvas(roomId);
     const clientIds = (
       await this.messagesService.getClientIdsByRoomId(roomId)
@@ -123,10 +163,18 @@ export class RoomsService {
       client.to(e).emit('canvasClean');
     });
   }
-  async getCanvasBgc(roomId: string) {
+  async getCanvasBgc(client: Socket) {
+    const roomId = await this.userService.findRoomIdWithClientId(client.id);
+    if(!roomId) {
+      return;
+    }
     return await this.roomService.getCanvasBgc(roomId);
   }
-  async updateCanvasBgc(roomId: string, canvasBgc: string, client: Socket) {
+  async updateCanvasBgc(canvasBgc: string, client: Socket) {
+    const roomId = await this.userService.findRoomIdWithClientId(client.id);
+    if(!roomId) {
+      return;
+    }
     await this.roomService.updateCanvasBgc(roomId, canvasBgc);
     const clientIds = (
       await this.messagesService.getClientIdsByRoomId(roomId)
@@ -178,7 +226,11 @@ export class RoomsService {
     }
     return updateResult;
   }
-  async findAllUsersInRoom(roomId: string) {
+  async findAllUsersInRoom(client: Socket) {
+    const roomId = await this.userService.findRoomIdWithClientId(client.id);
+    if(!roomId) {
+      return;
+    }
     return await this.roomService.findAllUsersInRoom(roomId);
   }
   // findOne(id: number) {

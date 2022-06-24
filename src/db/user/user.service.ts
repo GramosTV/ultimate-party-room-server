@@ -20,6 +20,13 @@ export class UserService {
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
   }
+  async findRoomIdWithClientId(clientId: string): Promise<string> {
+    return (await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.room', 'room')
+      .where('user.clientId = :clientId', { clientId })
+      .getOne())?.room?.id
+  }
   async findUserWithClientId(clientId: string): Promise<User> {
     const user = await this.userRepository.findOneBy({ clientId });
     return user;

@@ -29,8 +29,8 @@ export class MessagesGateway {
   }
 
   @SubscribeMessage('findAllMessages')
-  async findAllWithId(@MessageBody('roomId') roomId: string) {
-    return await this.messagesService.findAllWithId(roomId);
+  async findAllWithId(@ConnectedSocket() client: Socket) {
+    return await this.messagesService.findAllWithId(client);
   }
 
   @SubscribeMessage('clientId')
@@ -49,10 +49,9 @@ export class MessagesGateway {
   @SubscribeMessage('typing')
   async typing(
     @MessageBody('isTyping') isTyping: boolean,
-    @MessageBody('roomId') roomId: string,
     @ConnectedSocket() client: Socket,
   ) {
-    await this.messagesService.typing(isTyping, roomId, client);
+    await this.messagesService.typing(isTyping, client);
     // client.broadcast.emit('typing', { name, isTyping });
   }
   // @SubscribeMessage('findOneMessage')

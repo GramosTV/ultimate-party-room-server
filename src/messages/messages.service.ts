@@ -46,11 +46,19 @@ export class MessagesService {
     );
   }
 
-  async findAllWithId(roomId: string): Promise<Message[]> {
+  async findAllWithId(client: Socket): Promise<Message[]> {
+    const roomId = await this.userService.findRoomIdWithClientId(client.id);
+    if(!roomId) {
+      return;
+    }
     const messages = await this.messageService.findAllWithId(roomId);
     return messages;
   }
-  async typing(isTyping: boolean, roomId: string, client: Socket) {
+  async typing(isTyping: boolean, client: Socket) {
+    const roomId = await this.userService.findRoomIdWithClientId(client.id);
+    if(!roomId) {
+      return;
+    }
     let clientIds = await this.getClientIdsByRoomId(roomId);
     const name = await this.getClientName(client.id);
     clientIds = clientIds.filter((item) => item !== client.id);

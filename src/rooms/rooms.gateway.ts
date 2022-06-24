@@ -42,69 +42,66 @@ export class RoomsGateway implements OnGatewayDisconnect {
   // VIDEO GATEWAY
   @SubscribeMessage('videoState')
   async changeVideoState(
-    @MessageBody('roomId') roomId: string,
     @MessageBody('videoState') videoState: VideoState,
     @ConnectedSocket() client: Socket,
   ) {
-    await this.roomsService.videoState(roomId, videoState, client);
+    await this.roomsService.videoState(videoState, client);
   }
 
   @SubscribeMessage('videoMoment')
   async changeVideoMoment(
-    @MessageBody('roomId') roomId: string,
     @MessageBody('videoMoment') videoMoment: number,
     @ConnectedSocket() client: Socket,
   ) {
-    await this.roomsService.videoMoment(roomId, videoMoment, client);
+    await this.roomsService.videoMoment(videoMoment, client);
   }
 
   // The difference between this method and the one above is that this one updates the video moment for new users that'll join the room and not for the users that are already in the room.
   @SubscribeMessage('updateVideoMoment')
   async updateVideoMoment(
-    @MessageBody('roomId') roomId: string,
     @MessageBody('videoMoment') videoMoment: number,
+    @ConnectedSocket() client: Socket
   ) {
-    return this.roomsService.updateVideoMoment(roomId, videoMoment);
+    return this.roomsService.updateVideoMoment(videoMoment, client);
   }
 
   @SubscribeMessage('getVideoMoment')
-  async getVideoMoment(@MessageBody('roomId') roomId: string) {
-    return await this.roomsService.getVideoMoment(roomId);
+  async getVideoMoment(
+  @ConnectedSocket() client: Socket) {
+    return await this.roomsService.getVideoMoment(client);
   }
 
   @SubscribeMessage('updateVideoUrl')
   async updateVideoUrl(
-    @MessageBody('roomId') roomId: string,
     @MessageBody('videoUrl') videoUrl: string,
     @ConnectedSocket() client: Socket,
   ) {
-    return await this.roomsService.updateVideoUrl(roomId, videoUrl, client);
+    return await this.roomsService.updateVideoUrl(videoUrl, client);
   }
 
   @SubscribeMessage('getVideoUrl')
-  async getVideoUrl(@MessageBody('roomId') roomId: string) {
-    return await this.roomsService.getVideoUrl(roomId);
+  async getVideoUrl(@ConnectedSocket() client: Socket,) {
+    return await this.roomsService.getVideoUrl(client);
   }
 
   @SubscribeMessage('getVideoState')
-  async getVideoState(@MessageBody('roomId') roomId: string) {
-    return await this.roomsService.getVideoState(roomId);
+  async getVideoState(@ConnectedSocket() client: Socket,) {
+    return await this.roomsService.getVideoState(client);
   }
   //
 
   // ROOM's CANVAS GATEWAY
   @SubscribeMessage('getCanvas')
-  async getCanvas(@MessageBody('roomId') roomId: string) {
-    return await this.roomsService.getCanvas(roomId);
+  async getCanvas(@ConnectedSocket() client: Socket,) {
+    return await this.roomsService.getCanvas(client);
   }
 
   @SubscribeMessage('canvasChange')
   async changeCanvas(
-    @MessageBody('roomId') roomId: string,
     @MessageBody('canvasAction') canvasAction: string,
     @ConnectedSocket() client: Socket,
   ) {
-    await this.roomsService.canvasChange(roomId, canvasAction, client);
+    await this.roomsService.canvasChange(canvasAction, client);
   }
 
   @SubscribeMessage('canvasClean')
@@ -112,21 +109,20 @@ export class RoomsGateway implements OnGatewayDisconnect {
     @MessageBody('roomId') roomId: string,
     @ConnectedSocket() client: Socket,
   ) {
-    await this.roomsService.canvasClean(roomId, client);
+    await this.roomsService.canvasClean(client);
   }
 
   @SubscribeMessage('getCanvasBgc')
-  async getCanvasBgc(@MessageBody('roomId') roomId: string) {
-    return await this.roomsService.getCanvasBgc(roomId);
+  async getCanvasBgc(@ConnectedSocket() client: Socket,) {
+    return await this.roomsService.getCanvasBgc(client);
   }
 
   @SubscribeMessage('updateCanvasBgc')
   async updateCanvasBgc(
-    @MessageBody('roomId') roomId: string,
     @MessageBody('canvasBgc') canvasBgc: string,
     @ConnectedSocket() client: Socket,
   ) {
-    await this.roomsService.updateCanvasBgc(roomId, canvasBgc, client);
+    await this.roomsService.updateCanvasBgc(canvasBgc, client);
   }
   //
   @SubscribeMessage('joinRoom')
@@ -137,8 +133,8 @@ export class RoomsGateway implements OnGatewayDisconnect {
     return await this.roomsService.joinRoom(roomId, client, this.server);
   }
   @SubscribeMessage('findAllUsersInRoom')
-  async findAllUsersInRoom(@MessageBody('roomId') roomId: string) {
-    return await this.roomsService.findAllUsersInRoom(roomId);
+  async findAllUsersInRoom(@ConnectedSocket() client: Socket,) {
+    return await this.roomsService.findAllUsersInRoom(client);
   }
   @SubscribeMessage('findAllRooms')
   async findAll() {

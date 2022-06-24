@@ -1,8 +1,3 @@
-export class RoomEntity {
-  id: string;
-  createdAt: Date;
-  videoUrl: string;
-  videoMoment: number;
-  canvas: string;
-  canvasBgc: string;
-}
+import { Room } from "src/db/room/room.entity";
+
+export interface RoomEntity extends Room {}

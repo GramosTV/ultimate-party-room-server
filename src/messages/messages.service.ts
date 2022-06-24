@@ -39,11 +39,6 @@ export class MessagesService {
     return clientIds;
   }
   async create(createMessageDto: CreateMessageDto) {
-    const message: MessageEntity = {
-      name: createMessageDto.name,
-      text: createMessageDto.text,
-      roomId: createMessageDto.roomId,
-    };
     return await this.messageService.createMessage(
       createMessageDto.name,
       createMessageDto.text,

@@ -1,3 +1,6 @@
-import { Message } from 'src/db/message/message.entity';
-
-export interface MessageEntity extends Message {}
+export class MessageEntity {
+    name: string;
+    text: string;
+    roomId: string;
+    createdAt?: Date;
+  }

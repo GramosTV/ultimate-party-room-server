@@ -5,4 +5,5 @@ export class UserEntity {
   clientId: string;
   profilePicture: string;
   action?: UserVideoAction;
+  timeoutFlag: undefined | true;
 }

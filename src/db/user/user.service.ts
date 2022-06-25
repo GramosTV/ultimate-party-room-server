@@ -51,14 +51,14 @@ export class UserService {
       .leftJoinAndSelect('user.room', 'room')
       .where('user.clientId = :clientId', { clientId })
       .getOne();
-    if (userWithRoom.id) {
+    if (userWithRoom?.id) {
       await this.userRepository.save({
         id: userWithRoom.id,
         room: null,
       });
     }
 
-    if (userWithRoom.room) {
+    if (userWithRoom?.room) {
       return { roomId: userWithRoom.room.id, clientId: userWithRoom.clientId };
     }
     return null;

@@ -155,6 +155,7 @@ export class RoomsService {
     }
     return await this.roomService.getVideoUrl(roomId);
   }
+
   async getVideoState(client: Socket) {
     const roomId = await this.userService.findRoomIdWithClientId(client.id);
     if(!roomId) {

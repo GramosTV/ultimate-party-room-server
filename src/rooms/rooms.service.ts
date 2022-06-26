@@ -177,12 +177,13 @@ export class RoomsService {
     if(!roomId) {
       return;
     }
+    const user = await this.userService.findOneByClientId(client.id);
     await this.roomService.updateCanvas(roomId, canvasAction);
     const clientIds = (
       await this.messagesService.getClientIdsByRoomId(roomId)
     ).filter((item) => item !== client.id);
     clientIds.map(async (e) => {
-      client.to(e).emit('canvasChange', canvasAction);
+      client.to(e).emit('canvasChange', {canvasAction, user});
     });
   }
   async canvasClean(client: Socket) {
@@ -190,12 +191,13 @@ export class RoomsService {
     if(!roomId) {
       return;
     }
+    const user = await this.userService.findOneByClientId(client.id);
     await this.roomService.clearCanvas(roomId);
     const clientIds = (
       await this.messagesService.getClientIdsByRoomId(roomId)
     ).filter((item) => item !== client.id);
     clientIds.map(async (e) => {
-      client.to(e).emit('canvasClean');
+      client.to(e).emit('canvasClean', user);
     });
   }
   async getCanvasBgc(client: Socket) {
@@ -210,14 +212,16 @@ export class RoomsService {
     if(!roomId) {
       return;
     }
+    const user = await this.userService.findOneByClientId(client.id);
     await this.roomService.updateCanvasBgc(roomId, canvasBgc);
     const clientIds = (
       await this.messagesService.getClientIdsByRoomId(roomId)
     ).filter((item) => item !== client.id);
     clientIds.map(async (e) => {
-      client.to(e).emit('updateCanvasBgc', canvasBgc);
+      client.to(e).emit('updateCanvasBgc', {canvasBgc, user});
     });
   }
+  //
   async joinRoom(roomId: string, client: Socket, server: Server) {
     const joinResult = await this.roomService.joinRoom(roomId, client.id);
     const room = await this.roomService.findOne(roomId);

@@ -1,9 +1,9 @@
-import { UserVideoAction } from 'types';
+import { UserRoomAction } from 'types';
 export class UserEntity {
   id: string;
   name: string;
   clientId: string;
   profilePicture: string;
-  action?: UserVideoAction;
+  action?: UserRoomAction;
   timeoutFlag: undefined | true;
 }

@@ -1,3 +1,2 @@
-export * from './user.action';
 export * from './user.entity';
-export * from './userVideo.action';
+export * from './user.actions';

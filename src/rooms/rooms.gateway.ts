@@ -32,6 +32,10 @@ export class RoomsGateway implements OnGatewayDisconnect {
   async handleDisconnect(client: Socket) {
     await this.roomsService.handleDisconnect(client, this.server);
   }
+  @SubscribeMessage('disconnect')
+  async disconnect(@ConnectedSocket() client: Socket) {
+    await this.roomsService.handleDisconnect(client, this.server);
+  }
   @SubscribeMessage('createRoom')
   async create(@ConnectedSocket() client: Socket) {
     const room = await this.roomsService.create({ clientId: client.id });

@@ -63,7 +63,7 @@ export class MessagesService {
     const name = await this.getClientName(client.id);
     clientIds = clientIds.filter((item) => item !== client.id);
     clientIds.map((e) => {
-      client.to(e).emit('typing', { name, isTyping });
+      client.to(e).emit('typing', { name, isTyping, clientId: client.id });
     });
   }
   async createMessage(createMessageDto: CreateMessageDto, server: Server) {

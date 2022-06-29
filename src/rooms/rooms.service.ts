@@ -14,7 +14,7 @@ import {
 } from 'types';
 import { User } from 'src/db/user/user.entity';
 import { MessageService } from 'src/db/message/message.service';
-import { readdir, unlink } from 'fs';
+import { readdir, unlink } from 'fs/promises';
 import { join } from 'path';
 @Injectable()
 export class RoomsService {
@@ -26,28 +26,28 @@ export class RoomsService {
     this.deleteAllVideos()
     this.deleteAllPhotos()
   }
-  deleteAllVideos() {
+  async deleteAllVideos() {
     const directory = join(process.cwd(), '\\src\\uploads\\videos\\');
-    readdir(directory, (err, files) => {
-      if (err) throw err;
-      for (const file of files) {
-        unlink(join(directory, file), err => {
-          if (err) throw err;
-        });
-      }
-    });
+    try {
+    const files = await readdir(directory)
+      files.map(async (file) => {
+        await unlink(join(directory, file));
+      })
+  } catch (err) {
+    console.log(err)
   }
-  deleteAllPhotos() {
+}
+  async deleteAllPhotos() {
     const directory = join(process.cwd(), '\\src\\uploads\\profilePictures\\');
-    readdir(directory, (err, files) => {
-      if (err) throw err;
-      for (const file of files) {
+    try {
+    const files = await readdir(directory)
+      files.map(async (file) => {
         if (file === 'default.png') return;
-        unlink(join(directory, file), err => {
-          if (err) throw err;
-        });
-      }
-    });
+        await unlink(join(directory, file));
+      })
+    } catch (err) {
+      console.log(err)
+    }
   }
   constructor(
     @Inject(RoomService) private roomService: RoomService,

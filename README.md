@@ -141,6 +141,12 @@ Install dependencies
   npm install
 ```
 
+Launch mysql
+
+```bash
+  If you didn't notice the important message above, create ultimate_party_room mysql database (typeorm will take care of the tables)
+```
+
 Start the server
 
 ```bash

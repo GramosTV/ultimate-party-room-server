@@ -37,7 +37,7 @@ export class VideosController {
   @Post(':roomId')
   @UseInterceptors(
     FileInterceptor('video', {
-      dest: '../upr-server/src/uploads/videos',
+      dest: '../ultimate-party-room-server/src/uploads/videos',
       limits: { fileSize: 100e6 },
     }),
   )

@@ -23,7 +23,7 @@ export class VideosController {
   ): StreamableFile | string {
     try {
       const file = createReadStream(
-        join(process.cwd(), `../upr-server/src/uploads/videos/${video}`),
+        join(process.cwd(), `../ultimate-party-room-server/src/uploads/videos/${video}`),
       );
       res.set({
         'Content-Type': 'video/mp4',
@@ -37,7 +37,7 @@ export class VideosController {
   @Post(':roomId')
   @UseInterceptors(
     FileInterceptor('video', {
-      dest: '../upr-server/src/uploads/videos',
+      dest: '../ultimate-party-room-server/src/uploads/videos',
       limits: { fileSize: 100e6 },
     }),
   )

@@ -34,7 +34,7 @@ export class PhotosController {
   @Post(':clientId')
   @UseInterceptors(
     FileInterceptor('photo', {
-      dest: '../upr-server/src/uploads/profilePictures',
+      dest: '../ultimate-party-room-server/src/uploads/profilePictures',
       limits: { fileSize: 10e6 },
     }),
   )

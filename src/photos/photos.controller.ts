@@ -23,7 +23,7 @@ export class PhotosController {
     @Response({ passthrough: true }) res,
   ): StreamableFile {
     const file = createReadStream(
-      join(process.cwd(), `../upr-server/src/uploads/profilePictures/${photo}`),
+      join(process.cwd(), `../ultimate-party-room-server/src/uploads/profilePictures/${photo}`),
     );
     res.set({
       'Content-Type': 'image',
